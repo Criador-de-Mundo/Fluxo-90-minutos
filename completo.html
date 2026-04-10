@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Fluxo 90min - Criador de Mundo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+        body {
+            background: #eef2f0;
+            font-family: system-ui, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .card {
+            max-width: 480px;
+            width: 100%;
+            background: #ffffffea;
+            border-radius: 48px;
+            padding: 30px 25px;
+            text-align: center;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.05);
+            border: 1px solid #dad2c0;
+        }
+        h1 {
+            color: #2c5f2d;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .timer-block {
+            background: #f8f5ed;
+            border-radius: 60px;
+            padding: 35px 20px;
+            margin: 20px 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05), 0 5px 10px rgba(0,0,0,0.05);
+        }
+        .big-time {
+            font-size: 2.8rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 800;
+            color: #2c5f2d;
+            letter-spacing: 2px;
+        }
+        .phase-label {
+            margin-top: 12px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #c49a6c;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        button {
+            background: #e0d5c0;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #4a3b2c;
+            cursor: pointer;
+            transition: 0.1s linear;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:active {
+            transform: scale(0.95);
+            background: #cfc2a4;
+        }
+        .notify-btn {
+            background: #2c5f2d;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+        }
+        .notify-btn:active {
+            background: #1e401f;
+        }
+        .subscribe {
+            margin-top: 20px;
+            background: #7c6b4f;
+            padding: 12px;
+            border-radius: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+            font-weight: bold;
+            color: white;
+        }
+        .subscribe:active {
+            transform: scale(0.97);
+        }
+        @media (max-width: 480px) {
+            .card {
+                padding: 20px;
+            }
+            .big-time {
+                font-size: 2rem;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+            button {
+                padding: 10px 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>🌊 FLUXO 90'</h1>
+    <div class="timer-block">
+        <div class="big-time" id="timer">01:30:00</div>
+        <div class="phase-label" id="phase">📘 Estudo profundo</div>
+    </div>
+    <div class="controls">
+        <button id="startBtn">▶ Iniciar</button>
+        <button id="pauseBtn">⏸ Pausar</button>
+        <button id="resetBtn">🔄 Reset</button>
+    </div>
+    <button class="notify-btn" id="requestNotifyBtn">🔔 ATIVAR NOTIFICAÇÕES</button>
+    <div class="subscribe" onclick="window.open('https://youtube.com/@CriadorDeMundo', '_blank')">
+        🎥 APRENDA A FAZER - INSCREVA-SE
+    </div>
+</div>
+<script>
+    let studySec = 90 * 60;
+    let breakSec = 20 * 60;
+    let current = studySec;
+    let isStudy = true;
+    let running = false;
+    let target = null;
+    let intervalId = null;
+
+    const timerDiv = document.getElementById('timer');
+    const phaseDiv = document.getElementById('phase');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const requestNotifyBtn = document.getElementById('requestNotifyBtn');
+
+    function format(sec) {
+        let h = Math.floor(sec / 3600);
+        let m = Math.floor((sec % 3600) / 60);
+        let s = sec % 60;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function updateDisplay() {
+        timerDiv.innerText = format(current);
+    }
+
+    function playBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 880;
+            gain.gain.value = 0.3;
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1);
+            osc.stop(ctx.currentTime + 1);
+        } catch (e) { console.log("Áudio não suportado"); }
+        if (navigator.vibrate) navigator.vibrate(200);
+    }
+
+    function sendNotification(title, body) {
+        if (Notification.permission === 'granted') {
+            new Notification(title, { body });
+        } else {
+            alert(`🔔 ${title}: ${body}`);
+        }
+    }
+
+    function switchPhase() {
+        if (isStudy) {
+            current = breakSec;
+            isStudy = false;
+            phaseDiv.innerText = "🌿 Pausa ativa (20 min)";
+            sendNotification('📘 Fluxo 90min', 'Estudo concluído! Descanse 20 minutos.');
+        } else {
+            current = studySec;
+            isStudy = true;
+            phaseDiv.innerText = "📘 Estudo profundo (90 min)";
+            sendNotification('🌿 Fluxo 90min', 'Pausa encerrada! Volte aos estudos por 90 minutos.');
+        }
+        updateDisplay();
+        playBeep();
+    }
+
+    function tick() {
+        if (!running) return;
+        const now = Date.now();
+        if (target && now >= target) {
+            running = false;
+            if (intervalId) clearInterval(intervalId);
+            switchPhase();
+            startTimer();
+            return;
+        }
+        if (target) {
+            let rem = Math.max(0, Math.floor((target - now) / 1000));
+            if (rem !== current) {
+                current = rem;
+                updateDisplay();
+                if (current <= 0) {
+                    running = false;
+                    clearInterval(intervalId);
+                    switchPhase();
+                    startTimer();
+                }
+            }
+        }
+    }
+
+    function startTimer() {
+        if (running) return;
+        running = true;
+        target = Date.now() + current * 1000;
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(tick, 200);
+    }
+
+    function pauseTimer() {
+        if (!running) return;
+        running = false;
+        if (intervalId) clearInterval(intervalId);
+        if (target) {
+            current = Math.max(0, Math.floor((target - Date.now()) / 1000));
+            updateDisplay();
+            target = null;
+        }
+    }
+
+    function resetTimer() {
+        running = false;
+        if (intervalId) clearInterval(intervalId);
+        target = null;
+        isStudy = true;
+        current = studySec;
+        phaseDiv.innerText = "📘 Estudo profundo (90 min)";
+        updateDisplay();
+    }
+
+    function requestNotificationPermission() {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().then(perm => {
+                if (perm === 'granted') alert('✅ Notificações ativadas!');
+                else alert('❌ Permissão negada');
+            });
+        } else if (Notification.permission === 'granted') {
+            alert('✅ Notificações já estão ativadas');
+        } else {
+            alert('❌ Permissão negada permanentemente. Ative nas configurações.');
+        }
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    pauseBtn.addEventListener('click', pauseTimer);
+    resetBtn.addEventListener('click', resetTimer);
+    requestNotifyBtn.addEventListener('click', requestNotificationPermission);
+
+    updateDisplay();
+    if (Notification.permission === 'default') Notification.requestPermission();
+</script>
+</body>
+</html>
